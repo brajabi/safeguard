@@ -13,6 +13,16 @@ A minimal iOS connection inspector built with **Expo SDK 57, React Native, TypeS
 
 Time-zone names describe representative regions, not GPS locations. IP locations may be many kilometres from the device. Neither a distance nor time-zone mismatch proves VPN use.
 
+## App checker profiles
+
+Home opens with a five-row checklist and country flags. The **App checker** tab has an **Add app (+)** button above expandable profiles. Name an app (N26, Revolut, or any custom name), enable the requirements you want, and choose yes/no or a country for each. Edit or delete profiles at any time.
+
+The editable N26 example uses the user's requested Ireland IP/time-zone/GPS and VPN/residential requirements; these are personal preferences, not N26's published rules. A profile shows ✅ only when every enabled reading is verified and matches, ❎ for a known mismatch, and ⚠️ for missing/unverified/older readings. Results expire after five minutes. GPS has an independent timestamp. A profile with no requirements is never marked ready.
+
+Profile names and requirements persist in AsyncStorage on this device. Observed IPs, GPS coordinates and check history are never persisted. Country lookup for GPS uses the device's native reverse geocoder and transmits coordinates to that service; it is separate from IP geolocation. Shared time zones that cannot identify one country show unknown. Open the target app separately after reviewing your results; Safeguard does not intercept or prevent another app from opening.
+
+The free IP provider does not verify residential or VPN classification, so those requirements remain unknown. An active iOS tunnel alone never counts as a verified VPN. A profile requiring either will not show Ready without verified data.
+
 ## Run on iOS
 
 Use Node 24 (`nvm use`), Xcode 26.4+, and CocoaPods on macOS. Minimum iOS version is 16.4.
@@ -48,9 +58,9 @@ Free no-key IP lookups do not include VPN/proxy/Tor/hosting classifications. Tho
 
 - [ipwho.is](https://ipwhois.io/documentation) receives the public IP for geolocation. Its free service is rate-limited and has no availability guarantee.
 - [ipify's IPv6-only endpoint](https://www.ipify.org/) tests IPv6 connectivity. Failure is inconclusive, not evidence of a leak.
-- GPS is foreground-only and requested after an explicit tap. Coordinates are not sent to either IP provider.
+- GPS is foreground-only and requested after an explicit tap. Coordinates are not sent to either IP provider; the native reverse geocoder receives them to resolve the GPS country.
 - Apple Maps receives map-view requests when displaying a map.
-- No account, database, analytics, saved scan history, or background tracking. Results live in memory.
+- No account, backend, analytics, saved scan history, or background tracking. Results live in memory; only app preference profiles persist locally.
 - External services have their own logging and privacy policies. A VPN address shared by many people can hit their rate limits.
 
 The primary target is iOS. Android has no tunnel check and may require Google Maps credentials for a standalone map. A small web map fallback is included, but HeroUI Native and the chosen IP provider target native use; web is not the supported release target.
