@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "Safeguard",
+    "slug": "safeguard",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "safeguard",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.brajabi.safeguard",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.brajabi.safeguard"
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow Safeguard to compare your device location with your approximate IP location. Your coordinates are not sent to IP lookup services."
+        }
+      ],
+      "expo-font"
+    ]
+  }
+}
