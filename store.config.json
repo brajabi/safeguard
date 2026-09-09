@@ -1,0 +1,11 @@
+{
+  "configVersion": 0,
+  "apple": {
+    "info": {
+      "en-US": {
+        "title": "Safeguard App Checker",
+        "privacyPolicyUrl": "https://github.com/brajabi/safeguard/blob/main/PRIVACY.md"
+      }
+    }
+  }
+}

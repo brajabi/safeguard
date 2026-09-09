@@ -40,13 +40,17 @@ npx expo run:ios --device
 
 Physical devices require Apple signing configured in Xcode. Subsequent JavaScript work only needs `npm start`. Expo Go can run the JavaScript features but cannot include the local tunnel module; use a development build for the full app.
 
-EAS profiles are included for development, simulator, preview, and production. After configuring your own Expo project and Apple credentials:
+## TestFlight releases
+
+Safeguard is linked to [@brajabi/safeguard on Expo](https://expo.dev/accounts/brajabi/projects/safeguard) and [App Store Connect app 6810145614](https://appstoreconnect.apple.com/apps/6810145614/testflight/ios). Signing uses the Apple team configured in EAS; certificates and private keys are not stored in this repository.
 
 ```sh
-npx eas-cli build --platform ios --profile production
+npm run testflight
 ```
 
-The bundle ID is `com.brajabi.safeguard`. No App Store submission or distribution signing is included in this repository.
+The `testflight` profile produces a signed Release build for store distribution and submits it to App Store Connect. EAS manages build numbers remotely and increments them for each build. Development and simulator profiles remain separate. The app bundle ID is `com.brajabi.safeguard`.
+
+The minimal store metadata is in `store.config.json`; the privacy information is in [PRIVACY.md](PRIVACY.md). TestFlight uploads do not submit the app for public App Store review.
 
 ## VPN limitations
 

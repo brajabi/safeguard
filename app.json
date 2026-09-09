@@ -15,7 +15,11 @@
       }
     },
     "android": {
-      "package": "com.brajabi.safeguard"
+      "package": "com.brajabi.safeguard",
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
     },
     "plugins": [
       [
@@ -25,6 +29,12 @@
         }
       ],
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "84643c45-3910-475a-87fc-5499305ed52e"
+      }
+    },
+    "owner": "brajabi"
   }
 }

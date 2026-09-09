@@ -42,7 +42,8 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test src/lib/*.test.ts",
-    "check": "npm run typecheck && npm test"
+    "check": "npm run typecheck && npm test",
+    "testflight": "npx eas-cli@latest build --platform ios --profile testflight --auto-submit-with-profile testflight"
   },
   "private": true,
   "engines": {
