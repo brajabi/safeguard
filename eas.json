@@ -28,6 +28,14 @@
     },
     "testflight": {
       "extends": "production"
+    },
+    "apk": {
+      "distribution": "internal",
+      "developmentClient": false,
+      "autoIncrement": true,
+      "android": {
+        "buildType": "apk"
+      }
     }
   },
   "submit": {

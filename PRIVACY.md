@@ -7,7 +7,7 @@ Safeguard is a connection and location checker by brajabi. It compares public IP
 ## Information used
 
 - **Public IP:** Safeguard contacts [ipwho.is](https://ipwhois.io/) for approximate IP location and network information, [Blackbox](https://blackbox.ipinfo.app/) for network-type and VPN classification of the observed address, and [ipify](https://www.ipify.org/) for IPv6 reachability. These providers receive the public IP and normal request information. Their own privacy policies and retention practices apply.
-- **Device location:** Location permission is requested when you choose a location check. Once granted, location also refreshes when you open App checker, open an app profile, return to App checker, or use a refresh button. The device's geocoding service receives coordinates to resolve the country. Apple Maps receives requests to display the selected map area. Coordinates are not sent to the IP lookup providers. Safeguard does not track your location in the background.
+- **Device location:** Location permission is requested when you choose a location check. Once granted, location also refreshes when you open App checker, open an app profile, return to App checker, or use a refresh button. The device's geocoding service receives coordinates to resolve the country. Apple Maps on iOS and OpenStreetMap on Android receive the selected coordinates and map-area requests. Coordinates are not sent to the IP lookup providers. Safeguard does not track your location in the background.
 - **Time zone and tunnel indicators:** These are read from the device and compared locally. Local tunnel interface names are not sent to the IP providers.
 - **App profiles:** App names and selected requirements are saved locally. They are not uploaded to a Safeguard account or server. Device backups may contain these preferences, depending on your device settings.
 
@@ -19,7 +19,7 @@ Safeguard has no account system, advertising, or developer-operated analytics se
 
 ## Your controls
 
-You can decline or revoke location permission in iOS Settings and still use IP and time-zone checks. You can delete saved app profiles inside App checker. Removing the app removes its local app data; manage any device backups separately through your device settings.
+You can decline or revoke location permission in device Settings and still use IP and time-zone checks. You can delete saved app profiles inside App checker. Removing the app removes its local app data; manage any device backups separately through your device settings.
 
 ## Questions
 

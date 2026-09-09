@@ -16,3 +16,9 @@ web-build/
 coverage/
 
 .claude/
+
+*.apk
+*.aab
+*.jks
+*.keystore
+credentials.json

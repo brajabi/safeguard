@@ -787,20 +787,21 @@ function Dashboard() {
             <Text style={s.summaryTitle}>Device location is optional</Text>
             <Text style={s.modalBody}>
               Coordinates stay in app memory and are not sent to the IP lookup
-              services. The native map provider receives map-view requests, and
-              the device geocoding service receives coordinates to resolve your
-              GPS country. App names and requirements are saved only on this
-              device. There is no account, analytics, background tracking, or
-              saved location history.
+              services. Map views send the selected map area to Apple Maps on
+              iOS or OpenStreetMap on Android. The device geocoding service
+              receives coordinates to resolve your GPS country. App names and
+              requirements are saved only on this device. There is no account,
+              analytics, background tracking, or saved location history.
             </Text>
             <Text style={s.summaryTitle}>A signal, not a verdict</Text>
             <Text style={s.modalBody}>
-              The on-device check looks for active tunnel interfaces. VPNs,
-              enterprise networks, and iOS services can create them, so it
-              cannot prove VPN use or protection. This check requires the native
-              iOS build; it is unavailable in Expo Go. Blackbox uses network and
-              reverse-DNS evidence to classify residential, hosting, mobile, and
-              business connections. Residential status and VPN status are
+              On iOS, the on-device check looks for active tunnel interfaces;
+              VPNs, enterprise networks, and system services can create them. On
+              Android, it checks whether this app’s active network uses VPN
+              transport. Neither proves device-wide protection. Both need a
+              native build and are unavailable in Expo Go. Blackbox uses network
+              and reverse-DNS evidence to classify residential, hosting, mobile,
+              and business connections. Residential status and VPN status are
               checked independently. Conflicting or missing evidence stays
               unknown. Its classification API is currently a public beta; its
               availability and data can change. A time-zone or distance mismatch

@@ -9,3 +9,7 @@ An active interface means **a possible tunnel**, not a confirmed VPN. iOS servic
 The TypeScript wrapper returns `available: false` when the module is absent, including Expo Go and non-iOS platforms, or enumeration fails. The interface list must be treated as a local diagnostic hint.
 
 References: [Expo local modules](https://docs.expo.dev/modules/get-started/), [Apple getifaddrs](https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man3/getifaddrs.3.html).
+
+## Android
+
+The Android implementation observes VPN transport on this app’s active network using ConnectivityManager. The module declares the normal ACCESS_NETWORK_STATE permission; it does not request a runtime permission or create a VPN. Offline or unavailable network-capability data returns available=false. Split-tunnel policies may differ between apps, so a positive result does not establish device-wide protection or residential IP ownership.
