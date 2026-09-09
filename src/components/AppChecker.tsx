@@ -18,6 +18,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "heroui-native/button";
 import Feather from "@expo/vector-icons/Feather";
 import AppLogo from "./AppLogo";
+import IPhoneActions from "./IPhoneActions";
 import Svg, { Path } from "react-native-svg";
 import { APP_CATALOG } from "../lib/appCatalog";
 import {
@@ -93,12 +94,14 @@ const statusEmoji = { pass: "✅", fail: "❎", unknown: "⚠️" };
 export default function AppChecker({
   snapshot,
   onRefresh,
+  onConnectionRequest,
   onLocate,
   locating,
   locationError,
 }: {
   snapshot: Snapshot;
   onRefresh: () => void;
+  onConnectionRequest?: () => void;
   onLocate: () => void;
   locating: boolean;
   locationError?: string;
@@ -343,6 +346,14 @@ export default function AppChecker({
                 </Button>
               )}
             </View>
+            <IPhoneActions
+              requiredCountry={selected.requirements.timezoneCountry}
+              showVpn={selected.requirements.vpn === "yes"}
+              showTimezone={selected.requirements.timezoneCountry !== undefined}
+              disabled={snapshot.loading}
+              onConnectionRequest={onConnectionRequest}
+              onConnectionFailure={onRefresh}
+            />
             {!!locationError && <Text style={s.error}>{locationError}</Text>}
           </>
         ) : (

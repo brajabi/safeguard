@@ -24,6 +24,7 @@ import * as Haptics from "expo-haptics";
 import Feather from "@expo/vector-icons/Feather";
 import LocationMap from "./src/components/LocationMap";
 import AppChecker from "./src/components/AppChecker";
+import IPhoneActions from "./src/components/IPhoneActions";
 import { countryLabel, countryCodeForTimeZone } from "./src/lib/countries";
 import type { Snapshot } from "./src/lib/profiles";
 import { getTunnelStatus } from "./src/lib/tunnel";
@@ -317,6 +318,12 @@ function Dashboard() {
     if (denied) void Linking.openSettings();
     else void locate();
   };
+  const invalidateConnection = () => {
+    setIp(null);
+    setIpv6(null);
+    setChecked(null);
+    setTunnel({ available: false, active: false, interfaces: [] });
+  };
   const match = ip ? compareTimeZones(zone, ip.timeZone) : "unknown";
   const copy = async () => {
     if (!ip) return;
@@ -436,6 +443,12 @@ function Dashboard() {
               value={locating ? "Locating…" : countryLabel(gpsCountry)}
             />
           </View>
+          <IPhoneActions
+            requiredCountry={ip?.countryCode || undefined}
+            disabled={loading || locating}
+            onConnectionRequest={invalidateConnection}
+            onConnectionFailure={refreshChecks}
+          />
           {!!error && (
             <View accessibilityRole="alert" style={s.error}>
               <Text style={s.errorText}>{error}</Text>
@@ -717,6 +730,7 @@ function Dashboard() {
         <AppChecker
           snapshot={snapshot}
           onRefresh={refreshChecks}
+          onConnectionRequest={invalidateConnection}
           onLocate={locateOrSettings}
           locating={locating}
           locationError={locationError}

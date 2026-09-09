@@ -103,3 +103,11 @@ npm run apk
 ```
 
 The `apk` profile creates a signed, standalone Release APK for direct installation, not a Play Store AAB. It includes the same checklists and profiles, an OpenStreetMap embed, and native Android VPN-transport observation. EAS manages the Android signing key and version code. Android maps send the selected map coordinates to OpenStreetMap. Split-tunnel configurations can differ between apps.
+
+## iPhone connection actions
+
+Home and applicable app profiles have **Connect Shadowrocket** and **Set time zone** actions on iPhone. The connection button opens `shadowrocket://connect`, using Shadowrocket’s currently selected server. Shadowrocket must already be installed/configured, and may require iOS VPN approval. Safeguard never imports VPN credentials or assumes the request succeeded; it clears the old connection result and refreshes when you return.
+
+The time-zone action provides the required country’s city/zone suggestions and opens Safeguard’s Settings page using the public iOS API. Go back to Settings → General → Date & Time to make the change manually. A normal iPhone app cannot set the global system time zone, and Safeguard does not substitute a fake app-local timezone.
+
+The Shadowrocket query scheme is declared in `app.json`; a new native iOS build is required to include it. The connect URL was verified in the installed Shadowrocket application’s registered scheme and executable strings. Tests mock URL handoff; actual VPN connection needs testing on a physical iPhone with Shadowrocket. No system VPN or time-zone setting is changed automatically on opening Safeguard.

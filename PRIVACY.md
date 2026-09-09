@@ -13,6 +13,10 @@ Safeguard is a connection and location checker by brajabi. It compares public IP
 
 IP lookup results, GPS coordinates, and scan history are not saved by Safeguard; current results are held in memory. External services may retain their own request logs. Apple and your device platform may process diagnostics according to your platform settings and their policies.
 
+## Optional iPhone actions
+
+When you tap Connect Shadowrocket, Safeguard sends a connection command to the installed Shadowrocket app using its URL scheme. No VPN credentials or subscription links are read, stored, or sent by Safeguard. Shadowrocket controls the connection using its own configuration. Safeguard rechecks its public connection after you return. The time-zone action only shows instructions and opens device Settings; changes are made by you.
+
 ## Accounts, advertising, and analytics
 
 Safeguard has no account system, advertising, or developer-operated analytics service. It does not sell personal information. The source code is available in the [Safeguard repository](https://github.com/brajabi/safeguard).
