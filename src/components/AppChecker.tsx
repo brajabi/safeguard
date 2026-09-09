@@ -399,11 +399,7 @@ export default function AppChecker({
                           s.cornerStatus,
                           {
                             backgroundColor:
-                              result.status === "pass"
-                                ? C.green
-                                : result.status === "fail"
-                                  ? C.red
-                                  : "#8B9790",
+                              result.status === "pass" ? C.green : C.red,
                           },
                         ]}
                         pointerEvents="none"
