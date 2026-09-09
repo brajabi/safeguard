@@ -352,14 +352,7 @@ function Dashboard() {
               <Icon name="info" color={C.muted} />
             </Pressable>
           </View>
-          <View style={[s.intro, { marginTop: 27, marginBottom: 18 }]}>
-            <Eyebrow>YOUR CONNECTION, AT A GLANCE</Eyebrow>
-            <Text style={s.title}>Your results.</Text>
-            <Text style={s.subtitle}>
-              Know where you stand before you open an app.
-            </Text>
-          </View>
-          <View style={s.card}>
+          <View style={[s.card, { marginTop: 22 }]}>
             <View
               style={{
                 flexDirection: "row",
@@ -413,47 +406,7 @@ function Dashboard() {
               label="GPS location"
               value={locating ? "Locating…" : countryLabel(gpsCountry)}
             />
-            <View style={s.rule} />
-            <Text style={s.note}>
-              A tunnel suggests a possible VPN. Residential IP status needs
-              verified provider data. Unknown results never count as a match.
-            </Text>
-            <Button
-              variant="ghost"
-              onPress={locateOrSettings}
-              isDisabled={locating}
-              style={{ marginTop: 8 }}
-            >
-              <Button.Label style={{ color: C.green, fontSize: 12 }}>
-                {locating
-                  ? "Checking GPS…"
-                  : denied
-                    ? "Open location settings"
-                    : gpsCountry
-                      ? "Update GPS location"
-                      : "Check GPS location"}
-              </Button.Label>
-            </Button>
-            {!!locationError && (
-              <Text accessibilityRole="alert" style={s.locationError}>
-                {locationError}
-              </Text>
-            )}
           </View>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => setTab("checker")}
-            style={[s.summary, { marginTop: 12 }]}
-          >
-            <Icon name="check-square" />
-            <View style={{ flex: 1 }}>
-              <Text style={s.summaryTitle}>Ready for your next app?</Text>
-              <Text style={s.summaryText}>
-                Compare these results with your saved preferences.
-              </Text>
-            </View>
-            <Icon name="arrow-right" size={17} />
-          </Pressable>
           {!!error && (
             <View accessibilityRole="alert" style={s.error}>
               <Text style={s.errorText}>{error}</Text>
@@ -722,66 +675,6 @@ function Dashboard() {
               A time zone names a region, not your exact location. Travel or a
               manual setting can explain a difference.
             </Text>
-          </View>
-          <View style={s.sectionHeading}>
-            <Eyebrow>04 / NETWORK SIGNALS</Eyebrow>
-            <Icon name="shield" size={15} color={C.muted} />
-          </View>
-          <View style={s.card}>
-            <Row
-              label="Device tunnel"
-              value={
-                !tunnel.available
-                  ? "Not available in this build"
-                  : tunnel.active
-                    ? "Detected · possible VPN"
-                    : "Not detected"
-              }
-            />
-            <View style={s.rule} />
-            {(
-              [
-                ["VPN database", ip?.vpn],
-                ["Proxy", ip?.proxy],
-                ["Tor exit", ip?.tor],
-                ["Hosting network", ip?.hosting],
-              ] as const
-            ).map(([label, value]) => (
-              <Row
-                key={label}
-                label={label}
-                value={
-                  loading
-                    ? "Checking…"
-                    : value === true
-                      ? "Flagged"
-                      : value === false
-                        ? "Not flagged"
-                        : "Unknown"
-                }
-              />
-            ))}
-            <View style={s.rule} />
-            <Text style={s.note}>
-              A tunnel can indicate a VPN or an iOS service. No tunnel doesn’t
-              rule out a VPN. Free IP lookups do not include VPN database
-              checks, so those signals may be unknown.
-            </Text>
-          </View>
-          <Button
-            variant="outline"
-            onPress={refresh}
-            isDisabled={loading}
-            style={s.refreshButton}
-          >
-            <Icon name="refresh-cw" size={16} />
-            <Button.Label style={{ color: C.green }}>
-              {loading ? "Checking…" : "Check again"}
-            </Button.Label>
-          </Button>
-          <View style={s.footer}>
-            <Icon name="lock" size={12} color={C.muted} />
-            <Text style={s.footerText}>No account. No saved history.</Text>
           </View>
           <Text style={s.timestamp}>
             {checked

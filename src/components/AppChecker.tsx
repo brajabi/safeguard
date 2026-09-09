@@ -17,6 +17,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "heroui-native/button";
 import Feather from "@expo/vector-icons/Feather";
+import AppLogo from "./AppLogo";
+import { APP_CATALOG } from "../lib/appCatalog";
 import {
   evaluateProfile,
   type Profile,
@@ -106,6 +108,8 @@ export default function AppChecker({
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
   const [open, setOpen] = useState<string | null>(null);
+  const [pickingApp, setPickingApp] = useState(false);
+  const [addingApp, setAddingApp] = useState(false);
   const [draft, setDraft] = useState<Profile | null>(null);
   const [draftError, setDraftError] = useState("");
   const [countryField, setCountryField] = useState<RequirementKey | null>(null);
@@ -118,7 +122,7 @@ export default function AppChecker({
       const saved = await loadProfiles();
       if (!mounted.current) return;
       setProfiles(saved);
-      setOpen(saved[0]?.id ?? null);
+
       setLoaded(true);
     } catch {
       if (mounted.current) setError("Couldn’t load your profiles. Try again.");
@@ -155,7 +159,9 @@ export default function AppChecker({
       if (mounted.current) setSaving(false);
     }
   };
-  const edit = (profile?: Profile) => {
+  const edit = (profile?: Profile, appName = "") => {
+    setAddingApp(!profile);
+    setPickingApp(false);
     setDraftError("");
     setCountryField(null);
     setQuery("");
@@ -164,7 +170,7 @@ export default function AppChecker({
         ? { ...profile, requirements: { ...profile.requirements } }
         : {
             id: `profile-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-            name: "",
+            name: appName,
             requirements: {},
           },
     );
@@ -202,52 +208,207 @@ export default function AppChecker({
           text: "Delete",
           style: "destructive",
           onPress: () => {
-            void persist(profiles.filter((item) => item.id !== profile.id));
+            void persist(
+              profiles.filter((item) => item.id !== profile.id),
+            ).then((saved) => {
+              if (saved) setOpen(null);
+            });
           },
         },
       ],
     );
 
+  const selected = profiles.find((profile) => profile.id === open);
+  const evaluation = selected
+    ? evaluateProfile(selected, snapshot, Math.max(now, Date.now()))
+    : null;
+
   return (
     <>
-      <ScrollView
-        contentContainerStyle={{
-          padding: 24,
-          maxWidth: 590,
-          width: "100%",
-          alignSelf: "center",
-          paddingBottom: 32,
-        }}
-      >
-        <View style={s.heading}>
-          <Text style={s.eyebrow}>BEFORE YOU OPEN</Text>
-          <Text style={s.title}>App checker</Text>
-          <Text style={s.subtitle}>
-            Your apps. Your requirements. One quick check.
-          </Text>
-        </View>
-        <View style={s.toolbar}>
-          <Text style={s.sectionLabel}>
-            SAVED PROFILES{loaded ? ` · ${profiles.length}` : ""}
-          </Text>
-          <Button
-            size="sm"
-            isDisabled={!loaded || saving}
-            onPress={() => edit()}
-            style={s.addButton}
-            accessibilityLabel="Add app profile"
-          >
-            <Feather
-              accessible={false}
-              accessibilityElementsHidden
-              importantForAccessibility="no"
-              name="plus"
-              size={18}
-              color="white"
-            />
-            <Button.Label style={s.white}>Add app</Button.Label>
-          </Button>
-        </View>
+      <ScrollView key={selected?.id ?? "apps"} contentContainerStyle={s.page}>
+        {selected && evaluation ? (
+          <>
+            <View style={s.toolbar}>
+              <Pressable
+                style={s.textButton}
+                accessibilityRole="button"
+                accessibilityLabel="Back to apps"
+                onPress={() => setOpen(null)}
+              >
+                <Feather
+                  accessible={false}
+                  accessibilityElementsHidden
+                  importantForAccessibility="no"
+                  name="chevron-left"
+                  size={22}
+                  color={C.green}
+                />
+                <Text style={s.actionLabel}>Apps</Text>
+              </Pressable>
+              <Pressable
+                style={s.textButton}
+                disabled={saving}
+                accessibilityRole="button"
+                accessibilityLabel={`Delete ${selected.name}`}
+                onPress={() => remove(selected)}
+              >
+                <Feather
+                  accessible={false}
+                  accessibilityElementsHidden
+                  importantForAccessibility="no"
+                  name="trash-2"
+                  size={18}
+                  color={C.muted}
+                />
+              </Pressable>
+            </View>
+            <View style={s.detailHeading}>
+              <AppLogo name={selected.name} size={64} />
+              <Text style={s.detailTitle}>{selected.name}</Text>
+              <Text
+                style={[
+                  s.status,
+                  evaluation.status === "pass" && { color: C.green },
+                ]}
+              >
+                {statusLabels[evaluation.status]}
+              </Text>
+            </View>
+            <View style={s.checklist}>
+              {evaluation.results.length === 0 && (
+                <Text style={s.subtitle}>
+                  Choose your checks in preferences.
+                </Text>
+              )}
+              {evaluation.results.map((result, index) => (
+                <View
+                  key={result.key}
+                  style={[s.result, index === 0 && { borderTopWidth: 0 }]}
+                >
+                  <View style={s.flex}>
+                    <Text style={s.resultLabel}>
+                      {fields.find((field) => field.key === result.key)?.label}
+                    </Text>
+                    <Text style={s.actual}>
+                      {valueLabel(result.key, result.actual)}
+                    </Text>
+                    <Text style={s.small}>
+                      Required: {valueLabel(result.key, result.expected)}
+                    </Text>
+                  </View>
+                  <Text
+                    style={s.resultEmoji}
+                    accessibilityLabel={
+                      result.status === "pass"
+                        ? "Matches"
+                        : result.status === "fail"
+                          ? "Does not match"
+                          : "Unknown"
+                    }
+                  >
+                    {statusEmoji[result.status]}
+                  </Text>
+                </View>
+              ))}
+            </View>
+            <Pressable
+              style={[s.textButton, { marginTop: 8 }]}
+              disabled={saving}
+              onPress={() => edit(selected)}
+              accessibilityRole="button"
+              accessibilityLabel={`Edit ${selected.name}`}
+            >
+              <Text style={s.actionLabel}>Edit preferences</Text>
+            </Pressable>
+            <View style={s.checkActions}>
+              <Button
+                isDisabled={snapshot.loading}
+                onPress={onRefresh}
+                style={s.refresh}
+              >
+                <Button.Label style={s.white}>
+                  {snapshot.loading ? "Checking…" : "Check again"}
+                </Button.Label>
+              </Button>
+              {selected.requirements.gpsCountry !== undefined && (
+                <Button
+                  variant="ghost"
+                  isDisabled={locating}
+                  onPress={onLocate}
+                >
+                  <Button.Label style={s.actionLabel}>
+                    {locating ? "Locating…" : "Update GPS"}
+                  </Button.Label>
+                </Button>
+              )}
+            </View>
+            {!!locationError && <Text style={s.error}>{locationError}</Text>}
+          </>
+        ) : (
+          <>
+            <View style={s.toolbar}>
+              <Text style={s.title}>App checker</Text>
+              <Pressable
+                disabled={!loaded || saving}
+                onPress={() => setPickingApp(true)}
+                style={[s.addButton, (!loaded || saving) && { opacity: 0.4 }]}
+                accessibilityRole="button"
+                accessibilityLabel="Add app profile"
+              >
+                <Feather
+                  accessible={false}
+                  accessibilityElementsHidden
+                  importantForAccessibility="no"
+                  name="plus"
+                  size={23}
+                  color="white"
+                />
+              </Pressable>
+            </View>
+            {!loaded && !error && (
+              <ActivityIndicator color={C.green} style={{ margin: 30 }} />
+            )}
+            {loaded && profiles.length === 0 && (
+              <View style={s.empty}>
+                <Text style={s.emptyTitle}>Add your first app</Text>
+                <Text style={s.subtitle}>
+                  Tap + to choose an app and its checks.
+                </Text>
+              </View>
+            )}
+            <View style={s.grid}>
+              {profiles.map((profile) => {
+                const result = evaluateProfile(
+                  profile,
+                  snapshot,
+                  Math.max(now, Date.now()),
+                );
+                return (
+                  <Pressable
+                    key={profile.id}
+                    style={s.appTile}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${profile.name}, ${statusLabels[result.status]}`}
+                    onPress={() => setOpen(profile.id)}
+                  >
+                    <AppLogo name={profile.name} size={54} />
+                    <Text style={s.tileName} numberOfLines={2}>
+                      {profile.name}
+                    </Text>
+                    <Text
+                      style={[
+                        s.status,
+                        result.status === "pass" && { color: C.green },
+                      ]}
+                    >
+                      {statusLabels[result.status]}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </>
+        )}
         {!!error && (
           <View style={s.notice}>
             <Text style={s.error}>{error}</Text>
@@ -258,186 +419,18 @@ export default function AppChecker({
             )}
           </View>
         )}
-        {!loaded && !error && (
-          <ActivityIndicator color={C.green} style={{ margin: 30 }} />
-        )}
-        {loaded && profiles.length === 0 && (
-          <View style={s.empty}>
-            <Feather
-              accessible={false}
-              accessibilityElementsHidden
-              importantForAccessibility="no"
-              name="layers"
-              size={30}
-              color={C.green}
-            />
-            <Text style={s.emptyTitle}>A little check before you go</Text>
-            <Text style={s.subtitle}>
-              Add an app and choose the connection and location preferences you
-              want to check.
-            </Text>
-          </View>
-        )}
-        {profiles.map((profile) => {
-          const evaluation = evaluateProfile(
-            profile,
-            snapshot,
-            Math.max(now, Date.now()),
-          );
-          const expanded = open === profile.id;
-          const passing = evaluation.status === "pass";
-          return (
-            <View key={profile.id} style={s.card}>
-              <Pressable
-                style={s.accordion}
-                accessibilityRole="button"
-                accessibilityLabel={`${profile.name}, ${statusLabels[evaluation.status]}`}
-                accessibilityState={{ expanded }}
-                onPress={() => setOpen(expanded ? null : profile.id)}
-              >
-                <View style={s.appIcon}>
-                  <Text style={s.appInitials}>
-                    {profile.name.slice(0, 2).toUpperCase()}
-                  </Text>
-                </View>
-                <View style={s.flex}>
-                  <Text style={s.appName}>{profile.name}</Text>
-                  <Text style={s.small}>
-                    {evaluation.results.length} requirement
-                    {evaluation.results.length === 1 ? "" : "s"}
-                  </Text>
-                </View>
-                <View style={[s.badge, passing && s.badgePass]}>
-                  <Text style={[s.badgeText, passing && { color: C.green }]}>
-                    {statusLabels[evaluation.status]}
-                  </Text>
-                </View>
-                <Feather
-                  accessible={false}
-                  accessibilityElementsHidden
-                  importantForAccessibility="no"
-                  name={expanded ? "chevron-up" : "chevron-down"}
-                  size={17}
-                  color={C.muted}
-                />
-              </Pressable>
-              {expanded && (
-                <View style={s.expanded}>
-                  {evaluation.results.length === 0 && (
-                    <Text style={s.subtitle}>
-                      Edit this profile to choose what matters for this app.
-                    </Text>
-                  )}
-                  {evaluation.results.map((result) => (
-                    <View key={result.key} style={s.result}>
-                      <Text style={s.resultEmoji}>
-                        {statusEmoji[result.status]}
-                      </Text>
-                      <View style={s.flex}>
-                        <Text style={s.resultLabel}>
-                          {
-                            fields.find((field) => field.key === result.key)
-                              ?.label
-                          }
-                        </Text>
-                        <Text style={s.actual}>
-                          {valueLabel(result.key, result.actual)}
-                        </Text>
-                        <Text style={s.small}>
-                          Required: {valueLabel(result.key, result.expected)}
-                        </Text>
-                      </View>
-                    </View>
-                  ))}
-                  <View style={s.cardActions}>
-                    <Pressable
-                      style={s.textButton}
-                      disabled={saving}
-                      onPress={() => edit(profile)}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Edit ${profile.name}`}
-                    >
-                      <Feather
-                        accessible={false}
-                        accessibilityElementsHidden
-                        importantForAccessibility="no"
-                        name="sliders"
-                        size={16}
-                        color={C.green}
-                      />
-                      <Text style={s.actionLabel}>Edit preferences</Text>
-                    </Pressable>
-                    <Pressable
-                      style={s.textButton}
-                      disabled={saving}
-                      onPress={() => remove(profile)}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Delete ${profile.name}`}
-                    >
-                      <Feather
-                        accessible={false}
-                        accessibilityElementsHidden
-                        importantForAccessibility="no"
-                        name="trash-2"
-                        size={17}
-                        color={C.muted}
-                      />
-                    </Pressable>
-                  </View>
-                </View>
-              )}
-            </View>
-          );
-        })}
-        <View style={s.checkActions}>
-          <Button
-            isDisabled={snapshot.loading}
-            onPress={onRefresh}
-            style={s.refresh}
-          >
-            <Feather
-              accessible={false}
-              accessibilityElementsHidden
-              importantForAccessibility="no"
-              name="refresh-cw"
-              size={17}
-              color="white"
-            />
-            <Button.Label style={s.white}>
-              {snapshot.loading ? "Checking…" : "Check again"}
-            </Button.Label>
-          </Button>
-          <Button variant="ghost" isDisabled={locating} onPress={onLocate}>
-            <Feather
-              accessible={false}
-              accessibilityElementsHidden
-              importantForAccessibility="no"
-              name="navigation"
-              size={16}
-              color={C.green}
-            />
-            <Button.Label style={s.actionLabel}>
-              {locating ? "Locating…" : "Update GPS"}
-            </Button.Label>
-          </Button>
-        </View>
-        {!!locationError && <Text style={s.error}>{locationError}</Text>}
-        <Text style={s.footnote}>
-          Profiles are your own preferences, not official app requirements. N26
-          is an editable example. Readings expire after five minutes. VPN and
-          residential verification are unavailable with the free IP service. GPS
-          country lookup sends coordinates to the device’s geocoding service.
-          Open your app separately when you’re ready.
-        </Text>
       </ScrollView>
       <Modal
-        visible={draft !== null}
+        visible={pickingApp || draft !== null}
         animationType="slide"
         presentationStyle="pageSheet"
         onRequestClose={() => {
           if (!saving) {
             if (countryField) setCountryField(null);
-            else setDraft(null);
+            else {
+              setDraft(null);
+              setPickingApp(false);
+            }
           }
         }}
       >
@@ -451,20 +444,50 @@ export default function AppChecker({
                 style={s.textButton}
                 disabled={saving}
                 accessibilityRole="button"
-                onPress={() =>
-                  countryField ? setCountryField(null) : setDraft(null)
-                }
+                onPress={() => {
+                  if (countryField) setCountryField(null);
+                  else if (draft && addingApp) {
+                    setDraft(null);
+                    setPickingApp(true);
+                  } else {
+                    setDraft(null);
+                    setPickingApp(false);
+                  }
+                }}
               >
                 <Text style={s.actionLabel}>
-                  {countryField ? "Back" : "Cancel"}
+                  {countryField || (draft && addingApp) ? "Back" : "Cancel"}
                 </Text>
               </Pressable>
               <Text style={s.modalTitle}>
-                {countryField ? "Choose country" : "App preferences"}
+                {countryField
+                  ? "Choose country"
+                  : pickingApp
+                    ? "Choose app"
+                    : "App preferences"}
               </Text>
               <View style={{ width: 58 }} />
             </View>
-            {countryField ? (
+            {pickingApp ? (
+              <ScrollView contentContainerStyle={s.pickerContent}>
+                <View style={s.pickerGrid}>
+                  {APP_CATALOG.map((app) => (
+                    <Pressable
+                      key={app.id}
+                      style={s.pickerTile}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Select ${app.name}`}
+                      onPress={() =>
+                        edit(undefined, app.id === "custom" ? "" : app.name)
+                      }
+                    >
+                      <AppLogo name={app.name} size={52} />
+                      <Text style={s.pickerName}>{app.name}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </ScrollView>
+            ) : countryField ? (
               <>
                 <TextInput
                   value={query}
@@ -521,6 +544,9 @@ export default function AppChecker({
                 keyboardShouldPersistTaps="handled"
                 contentContainerStyle={s.form}
               >
+                <View style={s.formLogo}>
+                  <AppLogo name={draft?.name || "Custom"} size={54} />
+                </View>
                 <Text style={s.inputLabel}>APP NAME</Text>
                 <TextInput
                   value={draft?.name ?? ""}
@@ -536,27 +562,6 @@ export default function AppChecker({
                   accessibilityLabel="App name"
                   returnKeyType="done"
                 />
-                <View style={s.quickNames}>
-                  {["N26", "Revolut", "Custom app"].map((name) => (
-                    <Pressable
-                      key={name}
-                      style={s.chip}
-                      accessibilityRole="button"
-                      onPress={() =>
-                        setDraft((previous) =>
-                          previous
-                            ? {
-                                ...previous,
-                                name: name === "Custom app" ? "" : name,
-                              }
-                            : null,
-                        )
-                      }
-                    >
-                      <Text style={s.actionLabel}>{name}</Text>
-                    </Pressable>
-                  ))}
-                </View>
                 <Text style={s.inputLabel}>REQUIREMENTS</Text>
                 <Text style={s.subtitle}>
                   Turn on the checks you need, then choose the expected value
@@ -671,14 +676,79 @@ export default function AppChecker({
 
 const s = StyleSheet.create({
   flex: { flex: 1 },
-  heading: { gap: 8, marginBottom: 25 },
-  eyebrow: {
-    color: C.green,
-    fontSize: 10,
-    fontWeight: "700",
-    letterSpacing: 2,
+  page: {
+    padding: 24,
+    paddingTop: 18,
+    maxWidth: 590,
+    width: "100%",
+    alignSelf: "center",
+    paddingBottom: 32,
   },
-  title: { color: C.ink, fontSize: 36, fontWeight: "600", letterSpacing: -1.4 },
+  grid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
+  appTile: {
+    width: "48%",
+    flexGrow: 0,
+    backgroundColor: "white",
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: C.line,
+    padding: 21,
+    minHeight: 166,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 9,
+  },
+  tileName: {
+    color: C.ink,
+    fontSize: 16,
+    fontWeight: "600",
+    textAlign: "center",
+    marginTop: 3,
+  },
+  status: { color: C.muted, fontSize: 11, lineHeight: 16, textAlign: "center" },
+  detailHeading: {
+    alignItems: "center",
+    gap: 9,
+    paddingTop: 2,
+    paddingBottom: 25,
+  },
+  detailTitle: { color: C.ink, fontSize: 25, fontWeight: "600", marginTop: 4 },
+  checklist: {
+    backgroundColor: "white",
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: C.line,
+    paddingHorizontal: 19,
+    paddingVertical: 5,
+  },
+  pickerContent: { padding: 24, paddingTop: 22 },
+  pickerGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    columnGap: "3%",
+    rowGap: 12,
+  },
+  pickerTile: {
+    width: "31.3%",
+    backgroundColor: "white",
+    borderRadius: 19,
+    minHeight: 128,
+    paddingVertical: 18,
+    paddingHorizontal: 4,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+    borderWidth: 1,
+    borderColor: C.line,
+  },
+  pickerName: {
+    color: C.ink,
+    fontSize: 13,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  formLogo: { alignItems: "center", paddingBottom: 6 },
+  title: { color: C.ink, fontSize: 29, fontWeight: "600", letterSpacing: -0.9 },
   subtitle: { color: C.muted, fontSize: 14, lineHeight: 21 },
   toolbar: {
     flexDirection: "row",
@@ -686,59 +756,20 @@ const s = StyleSheet.create({
     alignItems: "center",
     marginBottom: 14,
   },
-  sectionLabel: {
-    color: C.muted,
-    fontSize: 10,
-    fontWeight: "700",
-    letterSpacing: 1.5,
-  },
   addButton: {
     backgroundColor: C.green,
-    minHeight: 44,
+    width: 44,
+    height: 44,
     borderRadius: 14,
-    paddingHorizontal: 15,
+    alignItems: "center",
+    justifyContent: "center",
   },
   white: { color: "white", fontSize: 14, fontWeight: "600" },
   notice: { padding: 16 },
   error: { color: C.red, fontSize: 14, lineHeight: 21 },
   empty: { backgroundColor: "white", borderRadius: 24, padding: 26, gap: 14 },
   emptyTitle: { color: C.ink, fontSize: 21, fontWeight: "600" },
-  card: {
-    backgroundColor: "white",
-    borderRadius: 23,
-    borderWidth: 1,
-    borderColor: C.line,
-    marginBottom: 12,
-    overflow: "hidden",
-  },
-  accordion: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    padding: 17,
-    minHeight: 89,
-  },
-  appIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 13,
-    backgroundColor: C.pale,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  appInitials: { color: C.green, fontWeight: "700", fontSize: 15 },
-  appName: { color: C.ink, fontSize: 18, fontWeight: "600", marginBottom: 4 },
   small: { color: C.muted, fontSize: 12, lineHeight: 18 },
-  badge: {
-    borderRadius: 20,
-    backgroundColor: "#F8F1E5",
-    paddingVertical: 6,
-    paddingHorizontal: 9,
-    maxWidth: 110,
-  },
-  badgePass: { backgroundColor: C.pale },
-  badgeText: { color: C.amber, fontSize: 10, fontWeight: "600" },
-  expanded: { paddingHorizontal: 20, paddingBottom: 6 },
   result: {
     flexDirection: "row",
     gap: 12,
@@ -754,13 +785,6 @@ const s = StyleSheet.create({
     marginBottom: 3,
   },
   actual: { color: C.ink, fontSize: 14, lineHeight: 21 },
-  cardActions: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderTopWidth: 1,
-    borderColor: C.line,
-  },
   textButton: {
     minHeight: 44,
     minWidth: 44,
@@ -805,19 +829,6 @@ const s = StyleSheet.create({
     paddingHorizontal: 16,
     fontSize: 16,
     color: C.ink,
-  },
-  quickNames: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    marginBottom: 10,
-  },
-  chip: {
-    backgroundColor: C.pale,
-    borderRadius: 12,
-    minHeight: 44,
-    paddingHorizontal: 15,
-    justifyContent: "center",
   },
   requirement: {
     backgroundColor: "white",

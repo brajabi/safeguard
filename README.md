@@ -15,7 +15,7 @@ Time-zone names describe representative regions, not GPS locations. IP locations
 
 ## App checker profiles
 
-Home opens with a five-row checklist and country flags. The **App checker** tab has an **Add app (+)** button above expandable profiles. Name an app (N26, Revolut, or any custom name), enable the requirements you want, and choose yes/no or a country for each. Edit or delete profiles at any time.
+Home opens with a five-row checklist and country flags. The **App checker** tab has an **Add app (+)** button above a grid of saved apps. Tap an app for its compact checklist; use Back to return to the grid. The picker includes bundled logos for PayPal, Revolut, N26, Wise, Binance, Bybit, Wirex, RedotPay, and Custom. Select an app, enable the requirements you want, and choose yes/no or a country for each. Edit or delete profiles at any time.
 
 The editable N26 example uses the user's requested Ireland IP/time-zone/GPS and VPN/residential requirements; these are personal preferences, not N26's published rules. A profile shows ✅ only when every enabled reading is verified and matches, ❎ for a known mismatch, and ⚠️ for missing/unverified/older readings. Results expire after five minutes. GPS has an independent timestamp. A profile with no requirements is never marked ready.
 
