@@ -18,6 +18,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "heroui-native/button";
 import Feather from "@expo/vector-icons/Feather";
 import AppLogo from "./AppLogo";
+import Svg, { Path } from "react-native-svg";
 import { APP_CATALOG } from "../lib/appCatalog";
 import {
   evaluateProfile,
@@ -391,17 +392,38 @@ export default function AppChecker({
                     accessibilityLabel={`${profile.name}, ${statusLabels[result.status]}`}
                     onPress={() => setOpen(profile.id)}
                   >
-                    <AppLogo name={profile.name} size={54} />
+                    <View style={s.logoWrap}>
+                      <AppLogo name={profile.name} size={54} />
+                      <View
+                        style={s.cornerStatus}
+                        pointerEvents="none"
+                        accessibilityElementsHidden
+                        importantForAccessibility="no-hide-descendants"
+                      >
+                        <Svg width={18} height={18} viewBox="0 0 24 24">
+                          <Path
+                            d={
+                              result.status === "pass"
+                                ? "M5 12l4 4L19 6"
+                                : "M6 6l12 12M18 6L6 18"
+                            }
+                            fill="none"
+                            stroke={
+                              result.status === "pass"
+                                ? C.green
+                                : result.status === "fail"
+                                  ? C.red
+                                  : C.muted
+                            }
+                            strokeWidth={2.5}
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </Svg>
+                      </View>
+                    </View>
                     <Text style={s.tileName} numberOfLines={2}>
                       {profile.name}
-                    </Text>
-                    <Text
-                      style={[
-                        s.status,
-                        result.status === "pass" && { color: C.green },
-                      ]}
-                    >
-                      {statusLabels[result.status]}
                     </Text>
                   </Pressable>
                 );
@@ -688,16 +710,14 @@ const s = StyleSheet.create({
   appTile: {
     width: "48%",
     flexGrow: 0,
-    backgroundColor: "white",
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: C.line,
-    padding: 21,
-    minHeight: 166,
+    padding: 16,
+    minHeight: 116,
     alignItems: "center",
     justifyContent: "center",
     gap: 9,
   },
+  logoWrap: { position: "relative" },
+  cornerStatus: { position: "absolute", top: -6, right: -13 },
   tileName: {
     color: C.ink,
     fontSize: 16,
@@ -730,16 +750,12 @@ const s = StyleSheet.create({
   },
   pickerTile: {
     width: "31.3%",
-    backgroundColor: "white",
-    borderRadius: 19,
     minHeight: 128,
     paddingVertical: 18,
     paddingHorizontal: 4,
     alignItems: "center",
     justifyContent: "center",
     gap: 12,
-    borderWidth: 1,
-    borderColor: C.line,
   },
   pickerName: {
     color: C.ink,
