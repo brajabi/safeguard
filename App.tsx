@@ -305,7 +305,7 @@ function Dashboard() {
   const timezoneCountry = countryCodeForTimeZone(zone);
   const snapshot: Snapshot = {
     vpn: ip?.vpn ?? null,
-    residential: null,
+    residential: ip?.residential ?? null,
     ipCountry: ip?.countryCode || null,
     timezoneCountry,
     gpsCountry,
@@ -411,7 +411,15 @@ function Dashboard() {
             />
             <Row
               label="Residential IP"
-              value={loading ? "Checking…" : "⚠️ Not verified"}
+              value={
+                loading
+                  ? "Checking…"
+                  : ip?.residential === true
+                    ? "✅ Residential"
+                    : ip?.residential === false
+                      ? "❎ Not residential"
+                      : "⚠️ Unknown"
+              }
             />
             <Row
               label="IP location"
@@ -488,6 +496,7 @@ function Dashboard() {
             </View>
             <View style={s.rule} />
             <Row label="Network" value={ip?.isp || "—"} />
+            <Row label="IP type" value={ip?.networkType || "—"} />
             <Row label="Region" value={ip?.region || "—"} />
             <Row label="ASN" value={ip?.asn || "—"} />
             <Row
@@ -770,9 +779,10 @@ function Dashboard() {
             </Text>
             <Text style={s.summaryTitle}>What gets shared</Text>
             <Text style={s.modalBody}>
-              IP lookups contact ipwho.is. An IPv6 check contacts ipify. These
-              services see your public IP, as any website would. Their own
-              privacy policies apply.
+              IP location lookups contact ipwho.is. Connection classification
+              sends the observed public IP to Blackbox at ipinfo.app. An IPv6
+              check contacts ipify. These services see your public IP, as any
+              website would. Their own privacy policies apply.
             </Text>
             <Text style={s.summaryTitle}>Device location is optional</Text>
             <Text style={s.modalBody}>
@@ -788,11 +798,27 @@ function Dashboard() {
               The on-device check looks for active tunnel interfaces. VPNs,
               enterprise networks, and iOS services can create them, so it
               cannot prove VPN use or protection. This check requires the native
-              iOS build; it is unavailable in Expo Go. VPN, proxy, Tor, and
-              hosting database classifications are unavailable with the free
-              lookup service. A time-zone or distance mismatch is not proof of a
-              VPN. This app does not run DNS or WebRTC leak tests.
+              iOS build; it is unavailable in Expo Go. Blackbox uses network and
+              reverse-DNS evidence to classify residential, hosting, mobile, and
+              business connections. Residential status and VPN status are
+              checked independently. Conflicting or missing evidence stays
+              unknown. Its classification API is currently a public beta; its
+              availability and data can change. A time-zone or distance mismatch
+              is not proof of a VPN. This app does not run DNS or WebRTC leak
+              tests.
             </Text>
+            {ip && (
+              <>
+                <Text style={s.summaryTitle}>
+                  Current network classification
+                </Text>
+                <Text style={s.modalBody}>
+                  {ip.networkType} · {ip.classificationSource || "Unavailable"}
+                  {"\n"}
+                  {ip.classificationReason}
+                </Text>
+              </>
+            )}
             <Text style={s.summaryTitle}>Free services have limits</Text>
             <Text style={s.modalBody}>
               Requests can fail or be rate-limited, especially on a shared VPN

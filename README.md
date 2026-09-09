@@ -21,7 +21,7 @@ The editable N26 example uses the user's requested Ireland IP/time-zone/GPS and 
 
 Profile names and requirements persist in AsyncStorage on this device. Observed IPs, GPS coordinates and check history are never persisted. Country lookup for GPS uses the device's native reverse geocoder and transmits coordinates to that service; it is separate from IP geolocation. Shared time zones that cannot identify one country show unknown. Open the target app separately after reviewing your results; Safeguard does not intercept or prevent another app from opening.
 
-The free IP provider does not verify residential or VPN classification, so those requirements remain unknown. An active iOS tunnel alone never counts as a verified VPN. A profile requiring either will not show Ready without verified data.
+Residential requirements use a live, exact-IP classification from Blackbox (ipinfo.app), based on positive network/rDNS evidence. Residential VPNs can satisfy both requirements; a VPN or proxy flag alone never makes the IP non-residential. Datacenter evidence produces a negative residential result, and missing/conflicting data stays unknown. An active iOS tunnel alone never counts as a confirmed VPN.
 
 ## Run on iOS
 
@@ -56,11 +56,12 @@ The minimal store metadata is in `store.config.json`; the privacy information is
 
 The Swift module enumerates active `utun`, `ipsec`, and `ppp` interfaces. These can belong to VPNs, enterprise networking, or iOS services. Presence does **not** establish that internet traffic is protected; absence does not rule out a VPN. It does not change network settings or inspect traffic. Test with actual VPN apps on a physical iPhone before relying on observations; simulator networking is the host's networking.
 
-Free no-key IP lookups do not include VPN/proxy/Tor/hosting classifications. Those rows intentionally show **Unknown**, never invented results. This is not a DNS or WebRTC leak tester. Safari Private Relay and split tunneling may cause Safari to use a different public address from the native app.
+Blackbox v3beta supplies network-type and VPN/proxy/Tor/hosting evidence where available. It is a public beta without guaranteed schema stability or continued free access; a failed lookup leaves the classification unknown while preserving IP/location results. These are provider classifications, not guarantees. This is not a DNS or WebRTC leak tester. Safari Private Relay and split tunneling may cause Safari to use a different public address from the native app.
 
 ## Data and privacy
 
 - [ipwho.is](https://ipwhois.io/documentation) receives the public IP for geolocation. Its free service is rate-limited and has no availability guarantee.
+- [Blackbox v3beta](https://blackbox.ipinfo.app/) receives the observed public IP to classify the exact address. Its results may be cached upstream for a day and can be inaccurate or incomplete. This service is ipinfo.app, not ipinfo.io.
 - [ipify's IPv6-only endpoint](https://www.ipify.org/) tests IPv6 connectivity. Failure is inconclusive, not evidence of a leak.
 - GPS is foreground-only and requested after an explicit tap. Coordinates are not sent to either IP provider; the native reverse geocoder receives them to resolve the GPS country.
 - Apple Maps receives map-view requests when displaying a map.
@@ -85,6 +86,7 @@ Manual physical-iPhone checklist: run with VPN off/on and refresh; grant/deny lo
 
 - `App.tsx`: native dashboard, permission flow, refresh lifecycle, privacy sheet.
 - `src/lib/ip.ts`: bounded HTTP requests and defensive response validation.
+- `src/lib/classification.ts`: optional, evidence-based residential and VPN classification.
 - `src/lib/comparison.ts`: timezone and geographic comparison logic.
 - `src/lib/tunnel.ts`: optional native module bridge.
 - `src/components/LocationMap.tsx`: native map.

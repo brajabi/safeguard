@@ -1,3 +1,5 @@
+import { fetchIpClassification } from "./classification";
+
 export interface IpInfo {
   ip: string;
   city: string;
@@ -13,6 +15,10 @@ export interface IpInfo {
   proxy: boolean | null;
   tor: boolean | null;
   hosting: boolean | null;
+  residential: boolean | null;
+  networkType: string;
+  classificationSource: string;
+  classificationReason: string;
   source: string;
 }
 
@@ -108,6 +114,10 @@ export function normalizeIpInfo(value: unknown): IpInfo {
     proxy: signal(security.proxy),
     tor: signal(security.tor),
     hosting: signal(security.hosting),
+    residential: null,
+    networkType: "Unknown",
+    classificationSource: "",
+    classificationReason: "No classification result",
     source: "ipwho.is",
   };
 }
@@ -147,7 +157,21 @@ async function requestJson(url: string, timeoutMs: number): Promise<unknown> {
 
 /** The request must originate on the device to observe that device's public IP. */
 export async function fetchIpInfo(): Promise<IpInfo> {
-  return normalizeIpInfo(await requestJson(IP_ENDPOINT, 12_000));
+  const info = normalizeIpInfo(await requestJson(IP_ENDPOINT, 12_000));
+  // Classify the exact observed address, not the address of a proxy/backend.
+  // Optional reputation failure must never discard a successful location lookup.
+  const classification = await fetchIpClassification(info.ip);
+  return {
+    ...info,
+    residential: classification.residential,
+    vpn: classification.vpn ?? info.vpn,
+    proxy: classification.proxy ?? info.proxy,
+    tor: classification.tor ?? info.tor,
+    hosting: classification.hosting ?? info.hosting,
+    networkType: classification.networkType,
+    classificationSource: classification.source,
+    classificationReason: classification.reason,
+  };
 }
 
 /** Null means no IPv6 result; network blocking and endpoint failures are inconclusive. */

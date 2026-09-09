@@ -110,3 +110,41 @@ test("malformed JSON produces an actionable error", async (t) => {
   );
   await assert.rejects(fetchIpInfo, /unreadable response/);
 });
+
+test("a classifier outage preserves the successful IP and location lookup", async (t) => {
+  t.mock.method(globalThis, "fetch", async (url: Parameters<typeof fetch>[0]) => {
+    if (String(url).startsWith("https://ipwho.is/"))
+      return new Response(JSON.stringify(fixture));
+    throw new Error("Classifier offline");
+  });
+  const result = await fetchIpInfo();
+  assert.equal(result.ip, fixture.ip);
+  assert.equal(result.city, "Dublin");
+  assert.equal(result.residential, null);
+  assert.equal(result.networkType, "Unknown");
+});
+
+test("residential VPN evidence reaches the same IP snapshot used by profiles", async (t) => {
+  t.mock.method(globalThis, "fetch", async (url: Parameters<typeof fetch>[0]) => {
+    if (String(url).startsWith("https://ipwho.is/"))
+      return new Response(JSON.stringify(fixture));
+    assert.equal(
+      String(url),
+      `https://blackbox.ipinfo.app/api/v3beta/${fixture.ip}`,
+    );
+    return new Response(
+      JSON.stringify({
+        ip: fixture.ip,
+        error: null,
+        classification: "vpn",
+        confidence: 1,
+        signals: { residentialasn: true, hosting: false, vpnasn: true },
+        evidence: ["residential_asn", "vpn_asn"],
+      }),
+    );
+  });
+  const result = await fetchIpInfo();
+  assert.equal(result.residential, true);
+  assert.equal(result.vpn, true);
+  assert.equal(result.networkType, "Residential VPN");
+});
