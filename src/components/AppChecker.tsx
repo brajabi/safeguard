@@ -395,12 +395,22 @@ export default function AppChecker({
                     <View style={s.logoWrap}>
                       <AppLogo name={profile.name} size={54} />
                       <View
-                        style={s.cornerStatus}
+                        style={[
+                          s.cornerStatus,
+                          {
+                            backgroundColor:
+                              result.status === "pass"
+                                ? C.green
+                                : result.status === "fail"
+                                  ? C.red
+                                  : "#8B9790",
+                          },
+                        ]}
                         pointerEvents="none"
                         accessibilityElementsHidden
                         importantForAccessibility="no-hide-descendants"
                       >
-                        <Svg width={18} height={18} viewBox="0 0 24 24">
+                        <Svg width={12} height={12} viewBox="0 0 24 24">
                           <Path
                             d={
                               result.status === "pass"
@@ -408,14 +418,8 @@ export default function AppChecker({
                                 : "M6 6l12 12M18 6L6 18"
                             }
                             fill="none"
-                            stroke={
-                              result.status === "pass"
-                                ? C.green
-                                : result.status === "fail"
-                                  ? C.red
-                                  : C.muted
-                            }
-                            strokeWidth={2.5}
+                            stroke="#FFFFFF"
+                            strokeWidth={3}
                             strokeLinecap="round"
                             strokeLinejoin="round"
                           />
@@ -717,7 +721,18 @@ const s = StyleSheet.create({
     gap: 9,
   },
   logoWrap: { position: "relative" },
-  cornerStatus: { position: "absolute", top: -6, right: -13 },
+  cornerStatus: {
+    position: "absolute",
+    top: -5,
+    right: -7,
+    width: 23,
+    height: 23,
+    borderRadius: 12,
+    borderWidth: 2.5,
+    borderColor: C.bg,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   tileName: {
     color: C.ink,
     fontSize: 16,
