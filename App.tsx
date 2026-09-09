@@ -115,6 +115,7 @@ function Dashboard() {
   const [copied, setCopied] = useState(false);
   const busy = useRef(false);
   const refreshQueued = useRef(false);
+  const foregroundRefresh = useRef<() => void>(() => {});
   const mounted = useRef(true);
   const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const refresh = useCallback(async (): Promise<void> => {
@@ -182,7 +183,7 @@ function Dashboard() {
             }
           })
           .catch(() => {});
-        void refresh();
+        foregroundRefresh.current();
       }
     });
     return () => {
@@ -289,6 +290,18 @@ function Dashboard() {
       }
     }
   };
+  const refreshChecks = () => {
+    void refresh();
+    void Location.getForegroundPermissionsAsync()
+      .then((permission) => {
+        if (mounted.current && permission.status === "granted") void locate();
+      })
+      .catch(() => {});
+  };
+  foregroundRefresh.current = () => {
+    if (tab === "checker") refreshChecks();
+    else void refresh();
+  };
   const timezoneCountry = countryCodeForTimeZone(zone);
   const snapshot: Snapshot = {
     vpn: ip?.vpn ?? null,
@@ -298,7 +311,7 @@ function Dashboard() {
     gpsCountry,
     checkedAt: checked?.getTime() ?? null,
     gpsCheckedAt,
-    loading,
+    loading: loading || locating,
   };
   const locateOrSettings = () => {
     if (denied) void Linking.openSettings();
@@ -327,8 +340,8 @@ function Dashboard() {
           contentContainerStyle={s.content}
           refreshControl={
             <RefreshControl
-              refreshing={loading}
-              onRefresh={refresh}
+              refreshing={loading || locating}
+              onRefresh={refreshChecks}
               tintColor={C.green}
             />
           }
@@ -343,14 +356,35 @@ function Dashboard() {
                 safeguard<Text style={{ color: C.green }}> .</Text>
               </Text>
             </View>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="About these checks and privacy"
-              onPress={() => setInfo(true)}
-              style={s.iconButton}
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
             >
-              <Icon name="info" color={C.muted} />
-            </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Refresh Home checks"
+                accessibilityState={{
+                  busy: loading || locating,
+                  disabled: loading || locating,
+                }}
+                disabled={loading || locating}
+                onPress={refreshChecks}
+                style={s.iconButton}
+              >
+                {loading || locating ? (
+                  <ActivityIndicator color={C.green} size="small" />
+                ) : (
+                  <Icon name="refresh-cw" size={20} />
+                )}
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="About these checks and privacy"
+                onPress={() => setInfo(true)}
+                style={s.iconButton}
+              >
+                <Icon name="info" color={C.muted} />
+              </Pressable>
+            </View>
           </View>
           <View style={[s.card, { marginTop: 22 }]}>
             <View
@@ -362,19 +396,6 @@ function Dashboard() {
               }}
             >
               <Text style={s.summaryTitle}>Connection checklist</Text>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Refresh checklist"
-                onPress={refresh}
-                disabled={loading}
-                style={s.iconButton}
-              >
-                {loading ? (
-                  <ActivityIndicator color={C.green} />
-                ) : (
-                  <Icon name="refresh-cw" size={17} />
-                )}
-              </Pressable>
             </View>
             <Row
               label="VPN detection"
@@ -686,9 +707,7 @@ function Dashboard() {
       <View style={{ flex: 1, display: tab === "checker" ? "flex" : "none" }}>
         <AppChecker
           snapshot={snapshot}
-          onRefresh={() => {
-            void refresh();
-          }}
+          onRefresh={refreshChecks}
           onLocate={locateOrSettings}
           locating={locating}
           locationError={locationError}
@@ -708,6 +727,7 @@ function Dashboard() {
             accessibilityState={{ selected: tab === id }}
             onPress={() => {
               setTab(id);
+              if (id === "checker") refreshChecks();
               void Haptics.selectionAsync().catch(() => {});
             }}
             style={s.tabItem}

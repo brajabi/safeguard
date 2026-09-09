@@ -349,22 +349,50 @@ export default function AppChecker({
           <>
             <View style={s.toolbar}>
               <Text style={s.title}>App checker</Text>
-              <Pressable
-                disabled={!loaded || saving}
-                onPress={() => setPickingApp(true)}
-                style={[s.addButton, (!loaded || saving) && { opacity: 0.4 }]}
-                accessibilityRole="button"
-                accessibilityLabel="Add app profile"
+              <View
+                style={{ flexDirection: "row", alignItems: "center", gap: 10 }}
               >
-                <Feather
-                  accessible={false}
-                  accessibilityElementsHidden
-                  importantForAccessibility="no"
-                  name="plus"
-                  size={23}
-                  color="white"
-                />
-              </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Refresh app checks"
+                  accessibilityState={{
+                    busy: snapshot.loading,
+                    disabled: snapshot.loading,
+                  }}
+                  disabled={snapshot.loading}
+                  onPress={onRefresh}
+                  style={s.textButton}
+                >
+                  {snapshot.loading ? (
+                    <ActivityIndicator color={C.green} size="small" />
+                  ) : (
+                    <Feather
+                      accessible={false}
+                      accessibilityElementsHidden
+                      importantForAccessibility="no"
+                      name="refresh-cw"
+                      size={21}
+                      color={C.green}
+                    />
+                  )}
+                </Pressable>
+                <Pressable
+                  disabled={!loaded || saving}
+                  onPress={() => setPickingApp(true)}
+                  style={[s.addButton, (!loaded || saving) && { opacity: 0.4 }]}
+                  accessibilityRole="button"
+                  accessibilityLabel="Add app profile"
+                >
+                  <Feather
+                    accessible={false}
+                    accessibilityElementsHidden
+                    importantForAccessibility="no"
+                    name="plus"
+                    size={23}
+                    color="white"
+                  />
+                </Pressable>
+              </View>
             </View>
             {!loaded && !error && (
               <ActivityIndicator color={C.green} style={{ margin: 30 }} />
@@ -390,7 +418,10 @@ export default function AppChecker({
                     style={s.appTile}
                     accessibilityRole="button"
                     accessibilityLabel={`${profile.name}, ${statusLabels[result.status]}`}
-                    onPress={() => setOpen(profile.id)}
+                    onPress={() => {
+                      setOpen(profile.id);
+                      onRefresh();
+                    }}
                   >
                     <View style={s.logoWrap}>
                       <AppLogo name={profile.name} size={54} />
